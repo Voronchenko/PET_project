@@ -1,0 +1,111 @@
+<apex:page doctype="html-5.0" standardcontroller="case" extensions="CaseWithOrderControllerExtension" sidebar="false">
+
+    <apex:sectionheader title="{!$Label.New_Custom_Case_Title}" />
+    <apex:form id="form">
+        <apex:messages style="font-size:14px;color:red;" />
+        <apex:pageblock id="pgblock">
+
+            <!--Save, Cancel Buttons Block -->
+            <apex:pageblockbuttons >
+                <apex:commandbutton action="{!saveCase}" value="Save" />
+                <apex:commandbutton action="{!cancelCase}" value="Cancel" />
+            </apex:pageblockbuttons>
+            
+            <!-- Contact and product section -->
+            <apex:pageblocksection title="{!$Label.Contact_and_Product}" columns="2" collapsible="false">
+                    <apex:inputfield value="{!caseObj.ContactId}" required="true" />
+                    <apex:inputfield value="{!caseObj.Product_part_affected__c}">
+                        <apex:actionsupport event="onchange" action="{!objectMappingNewCaseByProduct}" rerender="caseDetBlockWrap,mainProductsBlock" />
+                    </apex:inputfield>
+            </apex:pageblocksection>
+
+            <!-- Case details section -->
+            <apex:pageblocksection title="{!$Label.Case_details}" columns="2" collapsible="false">
+                    <apex:inputfield value="{!caseObj.Status}" />
+                    <apex:inputfield value="{!caseObj.Priority}" />
+            </apex:pageblocksection>
+
+            <!-- This block renders after Product is selected above -->
+            <apex:pageblock id="caseDetBlockWrap">
+                <apex:pageblock id="oLineBlock" title="{!$Label.Order}" rendered="{!NOT(ISBLANK(caseObj.Product_part_affected__c))}">
+                    <apex:pageblock id="mainProductsBlock">
+
+                        <!-- Add, Remove buttons -->
+                        <apex:pageblockbuttons location="bottom">
+                            <apex:commandbutton value="Add Selected Products" action="{!addSelectedProducts}" rerender="rightTable,availableProductsTable,requiredOrderFields,requiredorderfieldsnew" dir="LTR" />
+                            <apex:commandbutton value="Remove Selected Products" action="{!removeSelectedProducts}" rerender="rightTable,availableProductsTable,requiredOrderFields,requiredorderfieldsnew," dir="RTL" />
+                        </apex:pageblockbuttons>
+
+                        <!-- Table for Order Lines -->
+                        <apex:pageblocksection id="oLinePBSection" title="{!$Label.Order_Line}" collapsible="true" columns="2">
+
+                            <apex:pageblocksection columns="1">
+                                <!-- Available Products (Left Table) -->
+                                <apex:pageblocktable value="{!wrappedAvailableProducts}" var="allProducts" id="availableProductsTable" width="900px">
+                                    <apex:facet name="header">Available Products</apex:facet>
+
+                                    <!--  "Selected" checkbox -->
+                                    <apex:column >
+                                        <apex:inputcheckbox value="{!allProducts.selected}" />
+                                    </apex:column>
+
+                                    <!--  Product fields -->
+                                    <apex:repeat value="{!$ObjectType.Product2.FieldSets.All_Retireved_Products}" var="productFS">
+                                        <apex:column value="{!allProducts.innerProduct[productFS]}">
+                                        </apex:column>
+                                    </apex:repeat>
+
+                                </apex:pageblocktable>
+
+                                <!-- Pagination controls -->
+                                <apex:panelgrid columns="5" id="paginationButtons" style="margin-left:260px">
+                                    <apex:commandbutton status="paginaionSearchStatus" rerender="availableProductsTable,paginationButtons,pageSize,rightTable" value="|<" action="{!paginationArrowFirst}" disabled="{!!hasPrevious}" />
+                                    <apex:commandbutton status="paginaionSearchStatus" rerender="availableProductsTable,paginationButtons,pageSize,rightTable" value="<" action="{!paginationArrowPrevious}" disabled="{!!hasPrevious}" />
+                                    <apex:commandbutton status="paginaionSearchStatus" rerender="availableProductsTable,paginationButtons,pageSize,rightTable" value=">" action="{!paginationArrowNext}" disabled="{!!hasNext}" />
+                                    <apex:commandbutton status="paginaionSearchStatus" rerender="availableProductsTable,paginationButtons,pageSize,rightTable" value=">|" action="{!paginationArrowLast}" disabled="{!!hasNext}"/>
+                                    <apex:outputtext id="pageSize">{!(pageNumber * size)+1-size}-{!IF((pageNumber * size)>noOfRecords, noOfRecords,(pageNumber * size))} of {!noOfRecords}</apex:outputtext>
+                                </apex:panelgrid>
+                            </apex:pageblocksection>
+
+                            <!-- Wrapped Selected Products (Right Table) -->
+                            <apex:pageblocktable value="{!wrappedSelectedProducts}" var="selectedProducts" id="rightTable" style="margin-top:5px">
+                                <apex:facet name="header">Selected Order Lines</apex:facet>
+                                
+                                <!--  "Selected" checkbox -->
+                                <apex:column >
+                                    <apex:inputcheckbox value="{!selectedProducts.selected}" />
+                                </apex:column>
+
+                                <!--  Product fields -->
+                                <apex:repeat value="{!$ObjectType.Product2.FieldSets.All_Retireved_Products}" var="selProduct">
+                                    <apex:column value="{!selectedProducts.innerProduct[selProduct]}">
+                                    </apex:column>
+                                </apex:repeat>
+
+                                <apex:column headervalue="Quantity" id="qColumn">
+                                    <apex:input type="number" value="{!selectedProducts.quantity}" id="spQuantity" html-min="1" html-max="9999" />
+                                </apex:column>
+
+                            </apex:pageblocktable>
+
+                        </apex:pageblocksection>
+                    </apex:pageblock>
+
+                    <!-- Order dates section-->
+                    <apex:pageblocksection id="requiredorderfieldsnew" title="{!$Label.Order_Information}" columns="2">
+                        <apex:inputfield value="{!orderObj.Request_Date__c}" required="{!wrappedSelectedProducts.size > 0}" />
+                        <apex:inputfield value="{!orderObj.Delivery_Date__c}" required="{!wrappedSelectedProducts.size > 0}" />
+                    </apex:pageblocksection>
+
+                    <!-- Order addresses (for change) -->
+                    <apex:pageblocksection title="{!$Label.Address_Information}" columns="1">
+                        <apex:repeat value="{!$ObjectType.Order2__c.FieldSets.Address_Information}" var="address">
+                            <apex:inputfield value="{!orderObj[address]}" />
+                        </apex:repeat>
+                    </apex:pageblocksection>
+
+                </apex:pageblock>
+            </apex:pageblock>
+        </apex:pageblock>
+    </apex:form>
+</apex:page>
