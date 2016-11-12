@@ -1,0 +1,35 @@
+<apex:page id="OnlineCalculator" controller="OnlineCalculatorController" docType="html-5.0" sideBar="false">
+
+    <apex:form>
+        <apex:pageBlock title="Online Calculator">
+            <apex:pageBlockButtons>
+                <apex:commandButton action="{!calculate}" value="Calculate" reRender="result"/>
+                <apex:commandButton action="{!clear}" value="Clear" reRender="result,operandOne,operationType,operandTwo"/>
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection title="Please, input data" columns="3">
+                <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:23%">
+                    <apex:outputLabel value="First Number:"/>
+                    <apex:input value="{!operandOne}" id="operandOne" type="number"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:23%">
+                    <apex:outputLabel value="Operation:"/>
+                    <apex:input value="{!operationType}" id="operationType"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:23%">
+                    <apex:outputLabel value="Second Number:"/>
+                    <apex:input value="{!operandTwo}" id="operandTwo" type="number"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Your result">
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="{!result}" id="result"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>
